@@ -23,10 +23,10 @@ async fn main() {
     if let Err(err) = env::var("DATABASE_URL") {
         panic!("DATABASE_URL is not set");
     }
-    if let Err(err) = env::var("CONTEST_START"){
+    if let Err(err) = env::var("CONTEST_START") {
         panic!("CONTEST_START is not set");
     }
-    if let Err(err) = env::var("CONTEST_END"){
+    if let Err(err) = env::var("CONTEST_END") {
         panic!("CONTEST_END is not set");
     }
     if let Ok(s) = env::var("LOCAL") {
@@ -60,12 +60,12 @@ async fn main() {
         let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
         builder
             .set_private_key_file(
-                "/etc/letsencrypt/live/siesta-api.tk/privkey.pem",
+                "/etc/letsencrypt/live/colledor-api.tk/privkey.pem",
                 SslFiletype::PEM,
             )
             .unwrap();
         builder
-            .set_certificate_chain_file("/etc/letsencrypt/live/siesta-api.tk/fullchain.pem")
+            .set_certificate_chain_file("/etc/letsencrypt/live/colledor-api.tk/fullchain.pem")
             .unwrap();
         HttpServer::new(|| {
             let cors = Cors::default()
@@ -73,7 +73,18 @@ async fn main() {
                 .allowed_methods(vec!["GET", "POST"])
                 .allowed_headers(vec!["content-type", "access-control-allow-origin"]);
 
-            App::new().wrap(cors).service(auth::auth::login)
+            App::new()
+                .wrap(cors)
+                .service(auth::auth::login)
+                .service(submit::submit::submit)
+                .service(challenge::challenge::challenge)
+                .service(info::info::submission_info)
+                .service(info::info::submissions_list)
+                .service(info::info::challenge_info)
+                .service(info::info::challenges_list)
+                .service(info::info::users)
+                .service(info::info::top_rating_history)
+                .service(info::info::submitted_users)
         })
         .bind_openssl(env::var("API_URL").unwrap(), builder)
         .unwrap()
