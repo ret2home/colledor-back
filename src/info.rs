@@ -11,8 +11,6 @@ pub mod info {
     use std::path::Path;
     use std::process::Command;
 
-    const CONTEST_END: i64 = 1647529200;
-
     #[derive(Debug, Serialize, Deserialize)]
     pub struct Submission {
         id: i32,
@@ -37,7 +35,9 @@ pub mod info {
         let user_id = user_id.unwrap();
         let mut conn = Client::connect(&DATABASE_URL, NoTls).unwrap();
 
-        if misc::misc::current_time_num() < CONTEST_END && user_id.clone() != "admin" {
+        let contest_end:i64=env::var("CONTEST_END").unwrap().parse().unwrap();
+
+        if misc::misc::current_time_num() < contest_end && user_id.clone() != "admin" {
             let rows = conn
                 .query(
                     "SELECT * FROM submissions WHERE id=$1 AND user_id=$2",
@@ -94,8 +94,10 @@ pub mod info {
             submissions: Vec<Submission>,
         }
 
+        let contest_end:i64=env::var("CONTEST_END").unwrap().parse().unwrap();
+
         // コンテスト中は自分の以外閲覧禁止
-        if misc::misc::current_time_num() < CONTEST_END && user_id.clone() != "admin" {
+        if misc::misc::current_time_num() < contest_end && user_id.clone() != "admin" {
             let rows = conn
                 .query(
                     "SELECT * FROM submissions WHERE user_id=$1 ORDER BY id DESC",
@@ -276,7 +278,7 @@ pub mod info {
     pub fn top_rating_history()->HttpResponse{
         let DATABASE_URL: String = env::var("DATABASE_URL").unwrap();
         let mut conn = Client::connect(&DATABASE_URL, NoTls).unwrap();
-        let rows=conn.query("SELECT * FROM ratinghistory WHERE user_id in (SELECT id FROM users WHERE rating >= (SELECT rating FROM users ORDER BY rating DESC LIMIT 1 OFFSET 4)) ORDER BY tim_num;", &[]).unwrap();
+        let rows=conn.query("SELECT * FROM ratinghistory WHERE user_id in (SELECT id FROM users WHERE rating >= (SELECT rating FROM users ORDER BY rating DESC LIMIT 1 OFFSET 9)) ORDER BY tim_num;", &[]).unwrap();
 
         #[derive(Debug, Serialize, Deserialize)]
         pub struct History{

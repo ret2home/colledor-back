@@ -23,6 +23,12 @@ async fn main() {
     if let Err(err) = env::var("DATABASE_URL") {
         panic!("DATABASE_URL is not set");
     }
+    if let Err(err) = env::var("CONTEST_START"){
+        panic!("CONTEST_START is not set");
+    }
+    if let Err(err) = env::var("CONTEST_END"){
+        panic!("CONTEST_END is not set");
+    }
     if let Ok(s) = env::var("LOCAL") {
         HttpServer::new(|| {
             let cors = Cors::default()

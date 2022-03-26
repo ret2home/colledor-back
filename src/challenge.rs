@@ -20,7 +20,6 @@ pub mod challenge {
     }
 
     const SERVER_NUM: i64 = 3;
-    const CONTEST_END: i64 = 1647529200;
 
     #[post("/challenge")]
     pub fn challenge(data: web::Json<ChallengeRequest>) -> HttpResponse {
@@ -31,14 +30,13 @@ pub mod challenge {
         }
         let user_id = user_id.unwrap();
 
-        // 頻度制限
+        // 制限
         let mut conn = Client::connect(&DATABASE_URL, NoTls).unwrap();
 
-        let ng_tim: i32 = (misc::misc::current_time_num() - 180) as i32;
         let rows = conn
             .query(
-                "SELECT COUNT(*) FROM challenges WHERE tim_num > $1 AND user1_id=$2",
-                &[&ng_tim, &user_id.clone()],
+                "SELECT COUNT(*) FROM challenges WHERE user1_id=$1 AND stat!='FINISHED'",
+                &[&user_id.clone()],
             )
             .unwrap();
         let mut cnt: i64 = 0;
@@ -67,7 +65,9 @@ pub mod challenge {
             rated = 1;
         }
 
-        if misc::misc::current_time_num() >= CONTEST_END {
+        let contest_start:i64=env::var("CONTEST_START").unwrap().parse().unwrap();
+        let contest_end:i64=env::var("CONTEST_END").unwrap().parse().unwrap();
+        if misc::misc::current_time_num() >= contest_end || misc::misc::current_time_num() < contest_start{
             rated = 0;
         }
 
@@ -82,7 +82,7 @@ pub mod challenge {
         let server_id: i64 = cnt % SERVER_NUM;
 
         conn.execute(
-            "INSERT INTO challenges VALUES($1,$2,$3,$4,$5,'WJ',$6,$7,'','','')",
+            "INSERT INTO challenges VALUES($1,$2,$3,$4,$5,'WJ',$6,$7,'','','',114514)",
             &[
                 &(cnt as i32),
                 &rated,

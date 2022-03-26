@@ -81,7 +81,9 @@ def worker(server_id):
 
         print(f"FINISH: {id} {time.time()}")
 
-        cur.execute("UPDATE challenges SET user1_score=%s , user2_score=%s , stat='FINISHED' WHERE id=%s",(user1_score,user2_score,id,))
+
+        tim=int(time.time())
+        cur.execute("UPDATE challenges SET user1_score=%s , user2_score=%s , stat='FINISHED', end_num=%s WHERE id=%s",(user1_score,user2_score,tim,id,))
 
         if rated==1:
             cur.execute("BEGIN;")
@@ -102,9 +104,8 @@ def worker(server_id):
                 win1=win2=0.5
             
             W=1/(10**((user2_rate-user1_rate)/400)+1)
-            new_user1_rate=int(user1_rate+32*(win1-W))
-            new_user2_rate=int(user2_rate+32*(win2-(1-W)))
-            tim=int(time.time())
+            new_user1_rate=round(user1_rate+32*(win1-W))
+            new_user2_rate=round(user2_rate+32*(win2-(1-W)))
             cur.execute("INSERT INTO ratinghistory VALUES(%s,%s,%s)",(tim,user1,new_user1_rate))
             cur.execute("INSERT INTO ratinghistory VALUES(%s,%s,%s)",(tim,user2,new_user2_rate))
             cur.execute("UPDATE users SET rating=%s WHERE id=%s",(new_user1_rate,user1))
@@ -118,7 +119,7 @@ def worker(server_id):
             time.sleep(1)
 
 threads=[]
-for i in range(3):
+for i in range(len(SERVER_URLS)):
     for j in range(1):
         t=threading.Thread(target=worker,args=(i,))
         t.start()
