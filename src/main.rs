@@ -29,6 +29,9 @@ async fn main() {
     if let Err(err) = env::var("CONTEST_END") {
         panic!("CONTEST_END is not set");
     }
+    if let Err(err) = env::var("SERVER_NUM") {
+        panic!("SERVER_NUM is not set");
+    }
     if let Ok(s) = env::var("LOCAL") {
         HttpServer::new(|| {
             let cors = Cors::default()

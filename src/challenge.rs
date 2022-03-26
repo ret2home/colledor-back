@@ -19,8 +19,6 @@ pub mod challenge {
         target: String,
     }
 
-    const SERVER_NUM: i64 = 3;
-
     #[post("/challenge")]
     pub fn challenge(data: web::Json<ChallengeRequest>) -> HttpResponse {
         let DATABASE_URL: String = env::var("DATABASE_URL").unwrap();
@@ -79,7 +77,8 @@ pub mod challenge {
         }
         cnt += 1;
 
-        let server_id: i64 = cnt % SERVER_NUM;
+        let server_num:i64 =env::var("SERVER_NUM").unwrap().parse().unwrap();
+        let server_id: i64 = cnt % server_num;
 
         conn.execute(
             "INSERT INTO challenges VALUES($1,$2,$3,$4,$5,'WJ',$6,$7,'','','',114514)",
