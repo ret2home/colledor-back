@@ -9,66 +9,59 @@ cur = con.cursor()
 
 cur.execute("BEGIN;")
 
-try:
-    cur.execute("DROP TABLE users;")
-except:
-    pass
-
 cur.execute('''
 CREATE TABLE users(
     id VARCHAR UNIQUE NOT NULL PRIMARY KEY,
     pw VARCHAR NOT NULL,
-    rating INTEGER
+    rating INT8,
+    stock INT8
 );
 ''')
 
-try:
-    cur.execute("DROP TABLE submissions;")
-except:
-    pass
+cur.execute('''
+CREATE TABLE votes(
+    id INT8,
+    user_id VARCHAR NOT NULL,
+    vote INT8
+);
+''')
+
 
 cur.execute('''
 CREATE TABLE submissions(
-    id INTEGER UNIQUE NOT NULL PRIMARY KEY,
+    id INT8 UNIQUE NOT NULL PRIMARY KEY,
     tim_st VARCHAR NOT NULL,
-    tim_num INTEGER NOT NULL,
+    tim_num INT8 NOT NULL,
     user_id VARCHAR NOT NULL,
     source VARCHAR
 );
 ''')
 
-try:
-    cur.execute("DROP TABLE challenges;")
-except:
-    pass
 
 cur.execute('''
 CREATE TABLE challenges(
-    id INTEGER UNIQUE NOT NULL PRIMARY KEY,
-    rated INTEGER NOT NULL,
+    id INT8 UNIQUE NOT NULL PRIMARY KEY,
+    rated INT8 NOT NULL,
     tim_st VARCHAR NOT NULL,
-    tim_num INTEGER NOT NULL,
-    server_id INTEGER NOT NULL,
+    tim_num INT8 NOT NULL,
+    server_id INT8 NOT NULL,
     stat VARCHAR NOT NULL,
     user1_id VARCHAR NOT NULL,
     user2_id VARCHAR NOT NULL,
     user1_score VARCHAR,
     user2_score VARCHAR,
+    user1_vote INT8,
+    user2_vote INT8,
     opt VARCHAR,
-    end_num INTEGER NOT NULL
+    end_num INT8 NOT NULL
 );
 ''')
 
-try:
-    cur.execute("DROP TABLE ratinghistory;")
-except:
-    pass
-
 cur.execute('''
 CREATE TABLE ratinghistory(
-    tim_num INTEGER NOT NULL,
+    tim_num INT8 NOT NULL,
     user_id VARCHAR NOT NULL,
-    rating INTEGER NOT NULL
+    rating INT8 NOT NULL
 );
 ''')
 
@@ -80,7 +73,8 @@ for user in users:
     id=x[0]
     pw=x[1]
     hashed_pw=hashlib.md5(pw.encode()).hexdigest()
-    cur.execute("INSERT INTO users VALUES(%s,%s,1500)",(id,hashed_pw,))
+    cur.execute("INSERT INTO users VALUES(%s,%s,1500,1500)",(id,hashed_pw,))
     cur.execute("INSERT INTO ratinghistory VALUES(%s,%s,1500)",(contest_start,id,))
+
 
 cur.execute("COMMIT;")

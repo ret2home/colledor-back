@@ -13,7 +13,7 @@ pub mod misc;
 pub mod submit;
 use std::{thread, time};
 
-const SERVER_NUM: i32 = 3;
+const SERVER_NUM: i64 = 3;
 
 #[actix_web::main]
 async fn main() {
@@ -44,6 +44,7 @@ async fn main() {
                 .service(auth::auth::login)
                 .service(submit::submit::submit)
                 .service(challenge::challenge::challenge)
+                .service(challenge::challenge::vote)
                 .service(info::info::submission_info)
                 .service(info::info::submissions_list)
                 .service(info::info::challenge_info)
@@ -51,6 +52,8 @@ async fn main() {
                 .service(info::info::users)
                 .service(info::info::top_rating_history)
                 .service(info::info::submitted_users)
+                .service(info::info::users2)
+                .service(info::info::vote_info)
         })
         .bind("localhost:8000")
         .unwrap()
@@ -80,6 +83,7 @@ async fn main() {
                 .wrap(cors)
                 .service(auth::auth::login)
                 .service(submit::submit::submit)
+                .service(challenge::challenge::vote)
                 .service(challenge::challenge::challenge)
                 .service(info::info::submission_info)
                 .service(info::info::submissions_list)
@@ -87,7 +91,9 @@ async fn main() {
                 .service(info::info::challenges_list)
                 .service(info::info::users)
                 .service(info::info::top_rating_history)
+                .service(info::info::vote_info)
                 .service(info::info::submitted_users)
+                .service(info::info::users2)
         })
         .bind_openssl(env::var("API_URL").unwrap(), builder)
         .unwrap()

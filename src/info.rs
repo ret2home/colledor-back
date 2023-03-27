@@ -13,7 +13,7 @@ pub mod info {
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct Submission {
-        id: i32,
+        id: i64,
         tim: String,
         user: String,
         source: String,
@@ -22,7 +22,7 @@ pub mod info {
     #[derive(Debug, Serialize, Deserialize)]
     pub struct SubmissionInfoRequest {
         token: String,
-        id: i32,
+        id: i64,
     }
     #[post("/submission-info")]
     pub fn submission_info(data: web::Json<SubmissionInfoRequest>) -> HttpResponse {
@@ -161,21 +161,53 @@ pub mod info {
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct Challenge {
-        id: i32,
-        rated: i32,
+        id: i64,
+        rated: i64,
         tim: String,
         stat: String,
         user1: String,
         user2: String,
         user1_score: String,
         user2_score: String,
+        user1_vote: i64,
+        user2_vote: i64,
         output: String,
+        tim_num: i64
     }
+
+    #[get("/vote-info/{id}")]
+    pub fn vote_info(web::Path(id): web::Path<String>) -> HttpResponse{
+        let DATABASE_URL: String = env::var("DATABASE_URL").unwrap();
+        let mut conn = Client::connect(&DATABASE_URL, NoTls).unwrap();
+
+        let rows=conn.query("SELECT id,vote FROM votes WHERE user_id=$1",&[&id.clone()]).unwrap();
+
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct VoteInfo {
+            id: i64,
+            vote: i64
+        };
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct VoteInfoResponse {
+            votes: Vec<VoteInfo>
+        };
+
+        let mut res: VoteInfoResponse = VoteInfoResponse { votes: vec![] };
+
+        for row in rows {
+            res.votes.push(VoteInfo {
+                id: row.get(0),
+                vote: row.get(1),
+            })
+        }
+        return HttpResponse::Ok().json(res);
+    }
+
     #[get("/challenge-info/{id}")]
     pub fn challenge_info(web::Path(id): web::Path<String>) -> HttpResponse {
         let DATABASE_URL: String = env::var("DATABASE_URL").unwrap();
         let mut conn = Client::connect(&DATABASE_URL, NoTls).unwrap();
-        let rows=conn.query("SELECT id,rated,tim_st,stat,user1_id,user2_id,user1_score,user2_score,opt FROM challenges WHERE id=$1",&[&(id.parse::<i32>().unwrap())]).unwrap();
+        let rows=conn.query("SELECT id,rated,tim_st,stat,user1_id,user2_id,user1_score,user2_score,user1_vote,user2_vote,opt,tim_num FROM challenges WHERE id=$1",&[&(id.parse::<i64>().unwrap())]).unwrap();
 
         for row in rows {
             let mut res: Challenge = Challenge {
@@ -187,7 +219,10 @@ pub mod info {
                 user2: row.get(5),
                 user1_score: row.get(6),
                 user2_score: row.get(7),
-                output: row.get(8),
+                user1_vote: row.get(8),
+                user2_vote: row.get(9),
+                output: row.get(10),
+                tim_num: row.get(11)
             };
             return HttpResponse::Ok().json(res);
         }
@@ -206,7 +241,7 @@ pub mod info {
 
         if user.clone() != "all" {
             let rows = conn
-                .query("SELECT id,rated,tim_st,stat,user1_id,user2_id,user1_score,user2_score FROM challenges WHERE user1_id=$1 OR user2_id=$1 ORDER BY id DESC",&[&user.clone()]).unwrap();
+                .query("SELECT id,rated,tim_st,stat,user1_id,user2_id,user1_score,user2_score,user1_vote,user2_vote,tim_num FROM challenges WHERE user1_id=$1 OR user2_id=$1 ORDER BY id DESC",&[&user.clone()]).unwrap();
 
             let mut res: ChallengesListResponse = ChallengesListResponse { challenges: vec![] };
 
@@ -220,13 +255,16 @@ pub mod info {
                     user2: row.get(5),
                     user1_score: row.get(6),
                     user2_score: row.get(7),
+                    user1_vote: row.get(8),
+                    user2_vote: row.get(9),
                     output: "".to_string(),
+                    tim_num: row.get(10)
                 })
             }
             return HttpResponse::Ok().json(res);
         } else {
             let rows = conn
-                .query("SELECT id,rated,tim_st,stat,user1_id,user2_id,user1_score,user2_score FROM challenges ORDER BY id DESC",&[])
+                .query("SELECT id,rated,tim_st,stat,user1_id,user2_id,user1_score,user2_score,user1_vote,user2_vote,tim_num FROM challenges ORDER BY id DESC",&[])
                 .unwrap();
 
             let mut res: ChallengesListResponse = ChallengesListResponse { challenges: vec![] };
@@ -241,7 +279,10 @@ pub mod info {
                     user2: row.get(5),
                     user1_score: row.get(6),
                     user2_score: row.get(7),
+                    user1_vote: row.get(8),
+                    user2_vote: row.get(9),
                     output: "".to_string(),
+                    tim_num: row.get(10)
                 })
             }
             return HttpResponse::Ok().json(res);
@@ -258,7 +299,7 @@ pub mod info {
         #[derive(Debug, Serialize, Deserialize)]
         pub struct User {
             id: String,
-            rating: i32,
+            rating: i64,
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct Users {
@@ -274,6 +315,32 @@ pub mod info {
         return HttpResponse::Ok().json(res);
     }
 
+    #[get("/users2")]
+    pub fn users2() -> HttpResponse {
+        let DATABASE_URL: String = env::var("DATABASE_URL").unwrap();
+        let mut conn = Client::connect(&DATABASE_URL, NoTls).unwrap();
+        let rows = conn
+            .query("SELECT id, stock FROM users ORDER BY stock DESC", &[])
+            .unwrap();
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct User {
+            id: String,
+            stock: i64,
+        }
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct Users {
+            users: Vec<User>,
+        }
+        let mut res = Users { users: vec![] };
+        for row in rows {
+            res.users.push(User {
+                id: row.get(0),
+                stock: row.get(1),
+            });
+        }
+        return HttpResponse::Ok().json(res);
+    }
+
     #[get("/top-rating-history")]
     pub fn top_rating_history()->HttpResponse{
         let DATABASE_URL: String = env::var("DATABASE_URL").unwrap();
@@ -282,9 +349,9 @@ pub mod info {
 
         #[derive(Debug, Serialize, Deserialize)]
         pub struct History{
-            tim_num: i32,
+            tim_num: i64,
             user_id: String,
-            rating: i32
+            rating: i64
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct Res{
@@ -308,7 +375,7 @@ pub mod info {
         #[derive(Debug, Serialize, Deserialize)]
         pub struct User {
             id: String,
-            rating: i32,
+            rating: i64,
         }
         #[derive(Debug, Serialize, Deserialize)]
         pub struct Users {
