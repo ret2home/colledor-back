@@ -37,8 +37,8 @@ pub mod challenge {
 
         let mut conn = Client::connect(&DATABASE_URL, NoTls).unwrap();
         let rows=conn.query(
-            "SELECT COUNT(*) FROM challenges WHERE id=$1 AND tim_num < $2 AND rated=1",
-            &[&data.id,&(misc::misc::current_time_num()+60)]
+            "SELECT COUNT(*) FROM challenges WHERE id=$1 AND tim_num > $2 AND rated=1",
+            &[&data.id,&(misc::misc::current_time_num()-60)]
         ).unwrap();
 
         let mut cnt: i64 = 0;
