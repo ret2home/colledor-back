@@ -60,7 +60,7 @@ pub mod submit {
         let mut f = File::create(&Path::new(&src_path)).unwrap();
         f.write_all(data.source.clone().as_bytes());
     
-        Command::new("gsed")
+        Command::new("sed")
             .args(vec!["-i".to_string(),"s/PlayerXXX/Player1/".to_string(),format!("./ac-library/atcoder/{}/player1.cpp", file_name.clone())])
             .output().unwrap();
 
@@ -78,7 +78,7 @@ pub mod submit {
         f = File::create(&Path::new(&src_path)).unwrap();
         f.write_all(data.source.clone().as_bytes());
         
-        Command::new("gsed")
+        Command::new("sed")
                 .args(vec!["-i".to_string(),"s/PlayerXXX/Player2/".to_string(),format!("./ac-library/atcoder/{}/player2.cpp", file_name.clone())])
                 .output().unwrap();
 
